@@ -1,0 +1,24 @@
+Package: pai
+Title: Calculate bootstrapped and cross-validated personalized advantage index
+Version: 0.1
+Date: 2014-11-19
+Authors@R: c(person("Joshua", "Wiley", role = c("aut", "cre"),
+    email = "jwiley.psych@gmail.com"))
+Author: Joshua F. Wiley <jwiley.psych@gmail.com>
+Maintainer: Joshua F. Wiley <jwiley.psych@gmail.com>
+Description: This package uses linear regression to estimate an
+    individuals' personalized advantage index (PAI).  How much better
+    he or she will do in one treatment versus another and uses
+    cross validation and bootstrapping (and optionally accepts multiply
+    imputed data).
+Depends:
+    R (>= 3.1.1),
+    Rcpp,
+    RcppEigen,
+    doRNG,
+    doParallel,
+    parallel,
+    mice
+License: LGPL-3
+URL: https://github.com/jwiley/pai
+LazyData: true
