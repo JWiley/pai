@@ -20,5 +20,6 @@ Depends:
     parallel,
     mice
 License: LGPL-3
+ByteCompile: true
 URL: https://github.com/jwiley/pai
 LazyData: true
