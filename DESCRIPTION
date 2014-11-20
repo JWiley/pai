@@ -15,8 +15,6 @@ Depends:
     R (>= 3.1.1),
     Rcpp,
     RcppEigen,
-    doRNG,
-    doParallel,
     parallel,
     mice
 License: LGPL-3

@@ -3,8 +3,8 @@
 \alias{mi_lm_pai_cvboot}
 \title{Calculate PAI on multiply imputed data in parallel}
 \usage{
-mi_lm_pai_cvboot(formula, DV, TreatVar, imputedData, boot = TRUE, k = 500,
-  holdouts, yhigherisbetter = TRUE, seed = 1234, cl, cores)
+mi_lm_pai_cvboot(formula, DV, TreatVar, data, nboot = 500, holdouts, cl,
+  cores, seed = 1234, boot = TRUE, yhigherisbetter = TRUE)
 }
 \arguments{
 \item{formula}{An R formula, but without dependent variable}
@@ -14,36 +14,52 @@ mi_lm_pai_cvboot(formula, DV, TreatVar, imputedData, boot = TRUE, k = 500,
 \item{TreatVar}{a character string indicating the name of the treatment variable
 (note that values must be coded as 0/1 for the treatment variable.}
 
-\item{imputedData}{An imputed dataset (list of datasets) to use}
+\item{data}{A list of imputed datasets or for a single dataset, a list of one}
 
-\item{boot}{A logical value whether to bootstrap or not}
+\item{nboot}{The number of bootstrap resamples to take}
 
-\item{k}{The number of bootstrap resamples to take}
-
-\item{holdouts}{The holdouts to be used.  If a vector from 1 to the number of
-cases available in the dataset, it is equivalent to leave-one-out.
-Must be constructed manually.}
-
-\item{yhigherisbetter}{A logical value whether higher scores indicate better
-treatment response on the dependent variable}
-
-\item{seed}{A seed to make the bootstrap reproducible}
+\item{holdouts}{The holdouts to be used.  This should be a numeric list with as many elements
+desired for holdouts.  For example, if the list is the same length
+as the number of cases and each element is one case (i.e., 1, 2, \ldots, N),
+then it is equivalent to leave-one-out.  If there are ten elements, each containing
+approximately 1/10th of the sample, it is 10-fold cross validation, etc.
+If a single character string is passed, K-fold CV is assumed and holdouts
+are automatically constructed.}
 
 \item{cl}{An existing cluster to use (optional)}
 
 \item{cores}{The number of cores to use when creating a cluster, if an existing
 cluster is not passed (optional).  If left blank and no cluster passed,
 defaults to the number of cores available.}
+
+\item{seed}{A seed to make the bootstrap reproducible}
+
+\item{boot}{A logical value whether to bootstrap or not}
+
+\item{yhigherisbetter}{A logical value whether higher scores indicate better
+treatment response on the dependent variable}
 }
 \value{
-A three dimensional array with cases on the first dimension,
-  multiple estimates calculated on the second dimension, and bootstrap resamples
-  on the third dimension.
+A list containing a four dimensional array of the results, as well as
+  the input parameters for the model.  For the array, the first dimension is cases,
+  the second dimension is multiple estimates calculated, the third dimension is
+  bootstrap resamples, and the fourth dimension is imputations.
 }
 \description{
 This is a simple function that wraps \code{lm_pai_cvboot}.
 }
 \examples{
-# make me!!!
+# builtin dataset with 32 cases
+dat <- mtcars
+dat$cyl <- factor(dat$cyl)
+formula <- ~ cyl + am * (mpg + hp + drat + wt)
+DV <- "disp"
+TreatVar <- "am"
+k <- 50 # use a few just for speed
+holdouts <- 1:32 # for leave-one-out
+
+m <- mi_lm_pai_cvboot(formula, DV, TreatVar, list(dat, dat), nboot = k, holdouts = holdouts)
+
+# see result from first bootstrap resample
 }
 
