@@ -97,9 +97,9 @@ lm_pai_cvboot_fit <- function(formula, DV, TreatVar, dat, boot = TRUE, k, holdou
                    Residual = out[, "Y"] - out[, "Yhat.reality"])
 
       if (yhigherisbetter) {
-        out <- cbind(out, Lucky = ifelse(out[, "Yhat.0"] < out[, "Yhat.1"], 1, 0))
+        out <- cbind(out, Lucky = as.integer(ifelse(out[, "Yhat.0"] < out[, "Yhat.1"], 1, 0) == out[, TreatVar]))
       } else {
-        out <- cbind(out, Lucky = ifelse(out[, "Yhat.0"] < out[, "Yhat.1"], 0, 1))
+        out <- cbind(out, Lucky = as.integer(ifelse(out[, "Yhat.0"] < out[, "Yhat.1"], 0, 1) == out[, TreatVar]))
       }
 
       ties <- which(out[, "Yhat.PAI"] == 0)
