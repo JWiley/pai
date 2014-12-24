@@ -12,10 +12,11 @@ Description: This package uses linear regression to estimate an
     cross validation and bootstrapping (and optionally accepts multiply
     imputed data).
 Depends:
-    R (>= 3.1.1),
+    R (>= 3.1.0),
     Rcpp,
     RcppEigen,
     parallel,
+    boot,
     mice
 License: LGPL-3
 ByteCompile: true
