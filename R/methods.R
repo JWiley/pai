@@ -155,9 +155,57 @@ observed_outcome <- function(object) {
   return(output)
 }
 
+#' Calculate the Residuals for Predictions
+#'
+#' @param object an mipai or mibootpai class object returned from
+#'   \code{mi_lm_pai_cvboot}
+#' @param type A character string indicating the type of residuals to be calculated.
+#'   Currents mean or median of the absolute or root squared values.  Only applies
+#'   when summarize is \code{FALSE}.
+#' @param summarize Logical whether or not to summarize values for individuals
+#'   across imputations or leave as a matrix of residuals.  Defaults to \code{TRUE}.
+#' @param boot Logical whether to return deviations from bootstraps if summarize is
+#'   \code{FALSE}, set to \code{TRUE} by default.  Only applicable to mibootpai
+#'   class objects.
+#' @param dots Additional arguments to pass down.  Not currently used.
+#' @return A vector of residuals for each person or matrix across the
+#'   multiple imputations.
+#' @export
+#' @examples
+#' \dontrun{
+#' # builtin dataset with 32 cases
+#' dat <- mtcars
+#' dat$cyl <- factor(dat$cyl)
+#'
+#' m <- mi_lm_pai_cvboot(~ cyl + am * (mpg + hp + drat + wt),
+#'   "disp", "am", list(dat, dat),
+#'   nboot = 50, holdouts = "10", cores = 2)
+#'
+#' resid(m, "RootMeanSq")
+#' }
+resid.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "RootMedianSq"), summarize = TRUE, boot = TRUE, ...) {
+  stopifnot(inherits(object, "mipai"))
+  type <- match.arg(type)
 
+  if (summarize) {
+    apply(
+      object$nobootresults[, "Y", , ] - object$nobootresults[, "Yhat.reality", , ],
+      1, switch(type,
+        MeanAbs = function(x) mean(abs(x), na.rm = TRUE),
+        MedianAbs = function(x) median(abs(x), na.rm = TRUE),
+        RootMeanSq = function(x) sqrt(mean(x^2, na.rm = TRUE)),
+        RootMedianSq = function(x) sqrt(median(x^2, na.rm = TRUE)))
+      )
+  } else {
+    if (inherits(object, "mibootpai") && boot) {
+      object$bootresults[, "Y", , ] - object$bootresults[, "Yhat.reality", , ]
+    } else {
+      object$nobootresults[, "Y", , ] - object$nobootresults[, "Yhat.reality", , ]
+    }
+  }
+}
 
-#' Calculate Summary Statistics for PAI Scores
+#' Calculate Summary Statistics for PAI Model
 #'
 #' @param object an mipai or mibootpai class object returned from
 #'   \code{mi_lm_pai_cvboot}.
@@ -167,7 +215,7 @@ observed_outcome <- function(object) {
 #' @return A list of data frames with an element of summary statistics
 #'   for the PAI (PAI) and observed results for patients assigned to
 #'   their optimal and nonoptimal treatment (ObservedOutcome) and
-#'   for the histogram (Graph).
+#'   residuals 9Residuals), and for the histogram (Graph).
 #' @export
 #' @import boot pander ggplot2
 #' @examples
@@ -195,6 +243,10 @@ summary.mipai <- function(object, plot = TRUE, ...) {
     Max = max(pais, na.rm=TRUE),
     SD = sd(pais, na.rm=TRUE)
   )
+
+  resoutput <- data.frame(AbsError =
+    c(Mean = mean(resid.mipai(object, "MeanAbs")),
+      Median = median(resid.mipai(object, "MedianAbs"))))
 
   if (inherits(object, "mibootpai")) {
     pai.means <- matrix(NA_real_, nrow = dim(object$bootresults)[3],
@@ -243,6 +295,59 @@ summary.mipai <- function(object, plot = TRUE, ...) {
     output <- cbind(output,
       LLPerc = LL.perc, ULPerc = UL.perc,
       LLBCa = LL.bca, ULBCa = UL.bca)
+
+    e <- resid.mipai(object, summarize = FALSE, boot = TRUE)
+
+    e.medians <- e.means <- matrix(NA_real_, nrow = dim(object$bootresults)[3],
+      ncol = dim(object$bootresults)[4])
+
+    for (i in 1:dim(object$bootresults)[3]) {
+      for (j in 1:dim(object$bootresults)[4]) {
+        x <- e[, i, j]
+        e.means[i, j] <- mean(abs(x), na.rm=TRUE)
+        e.medians[i, j] <- median(abs(x), na.rm=TRUE)
+      }
+    }
+
+    ebres <- boot(data.frame(X = 1:dim(object$bootresults)[1]),
+      function(d, i) 1,
+      R = prod(dim(object$bootresults)[3:4]))
+
+    ebres$data <- rep(NA_real_, dim(object$bootresults)[1])
+
+    ebres$t0 <- resoutput$AbsError
+    ebres$t <- cbind(as.vector(e.means), as.vector(e.medians))
+
+    e.ci.res <- do.call(rbind, lapply(1:2, function(i) {
+      e.ci.bca <- tryCatch(boot.ci(ebres, index = i, type = "bca"),
+                    error = function(x) x)
+      e.ci.perc <- tryCatch(boot.ci(ebres, index = i, type = "perc"),
+                     error = function(x) x)
+
+      if (inherits(e.ci.bca, "error")) {
+        e.LL.bca <- NA
+        e.UL.bca <- NA
+        message(e.ci.bca)
+      } else {
+        e.LL.bca <- e.ci.bca$bca[1, 4]
+        e.UL.bca <- e.ci.bca$bca[1, 5]
+      }
+
+      if (inherits(e.ci.perc, "error")) {
+        e.LL.perc <- NA
+        e.UL.perc <- NA
+        message(e.ci.perc)
+      } else {
+        e.LL.perc <- e.ci.perc$percent[1, 4]
+        e.UL.perc <- e.ci.perc$percent[1, 5]
+      }
+
+      data.frame(LLPerc = e.LL.perc, ULPerc = e.UL.perc,
+                 LLBCa = e.LL.bca, ULBCa = e.UL.bca)
+    }))
+    rownames(e.ci.res) <- c("Mean", "Median")
+
+    resoutput <- cbind(resoutput, e.ci.res)
   }
 
   obs.output <- observed_outcome(object)
@@ -261,7 +366,12 @@ summary.mipai <- function(object, plot = TRUE, ...) {
   pander(obs.output, digits = 3, split.tables = 200,
     caption = "Observed Outcome for Patients Receiving Optimal and NonOptimal Treatment")
 
-  return(invisible(list(PAI = output, ObservedOutcome = obs.output, Graph = g)))
+  pander(resoutput, digits = 3, split.tables = 200,
+    caption = "Summary Statistics for the Residuals (Predicted Outcome - True Outcome)")
+
+
+  return(invisible(list(PAI = output, ObservedOutcome = obs.output,
+                        Residuals = resoutput, Graph = g)))
 }
 
 
@@ -270,8 +380,14 @@ summary.mipai <- function(object, plot = TRUE, ...) {
 #' @param object an mipai or mibootpai class object returned from
 #'   \code{mi_lm_pai_cvboot}.
 #' @param plot logical whether to plot a dotplot.
-#' @param cores An integer, the number of cores to be used for a local cluster
-#'   when calculating CIs on bootstrapped models.
+#' @param confint logical whether to calculate confidence intervals.
+#'   Only applies to bootstrapped model results.  Defaults to
+#'   \code{TRUE}.
+#' @param cl An existing cluster to use (optional)
+#' @param cores The number of cores to use when creating a cluster, if an existing
+#'   cluster is not passed (optional).  If left blank and no cluster passed,
+#'   defaults to the number of cores available, but is only used when calculating
+#'   bootstrapped confidence intervals.
 #' @param dots Additional arguments, not currently used.
 #'   a label for the results.
 #' @return An invisible list of two elements, the \dQuote{PAI} scores and
@@ -287,17 +403,23 @@ summary.mipai <- function(object, plot = TRUE, ...) {
 #'   "disp", "am", list(dat, dat),
 #'   nboot = 50, holdouts = "10", cores = 2)
 #'
+#' # use two cores to speed up when obtaining bootstrapped CIs
 #' predict(m, cores = 2L)
 #' }
-predict.mipai <- function(object, plot = TRUE, cores = 1L, ...) {
+predict.mipai <- function(object, plot = TRUE, confint = TRUE, cores, cl, ...) {
   stopifnot(inherits(object, "mipai"))
 
   if (inherits(object, "mibootpai")) {
-    env <- environment()
-    cl <- makeCluster(cores)
-    clusterEvalQ(cl, library(pai))
+    if (missing(cl)) {
+      if (missing(cores)) {
+        cores <- detectCores()
+      }
+      cl <- makeCluster(cores)
+      on.exit(stopCluster(cl))
+    }
 
-    on.exit(stopCluster(cl))
+    env <- environment()
+    clusterEvalQ(cl, library(pai))
   }
 
 
@@ -307,7 +429,7 @@ predict.mipai <- function(object, plot = TRUE, cores = 1L, ...) {
 
   finalout <- data.frame(PAI = pais)
 
-  if (inherits(object, "mibootpai")) {
+  if (inherits(object, "mibootpai") && confint) {
     spais <- as.data.frame(t(apply(object$bootresults[, "Yhat.PAI", , ], 1, function(x) {
       statsummary(x, c("Mean", "Median", "SD", "IQR", "LL95", "UL95"))
     })))
@@ -357,7 +479,7 @@ predict.mipai <- function(object, plot = TRUE, cores = 1L, ...) {
   pdat <- finalout[order(finalout$PAI), , drop = FALSE]
   pdat$Index <- 1:nrow(pdat)
 
-  if (inherits(object, "mibootpai")) {
+  if (inherits(object, "mibootpai") && confint) {
     g <- ggplot(pdat, aes(Index, PAI)) +
       geom_linerange(aes(ymin = LLPerc, ymax = ULPerc)) +
       geom_point() +

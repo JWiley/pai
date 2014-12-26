@@ -3,7 +3,7 @@
 \alias{predict.mipai}
 \title{Calculate Individual PAIs}
 \usage{
-\method{predict}{mipai}(object, plot = TRUE, cores = 1L, ...)
+\method{predict}{mipai}(object, plot = TRUE, confint = TRUE, cores, cl, ...)
 }
 \arguments{
 \item{object}{an mipai or mibootpai class object returned from
@@ -11,8 +11,16 @@
 
 \item{plot}{logical whether to plot a dotplot.}
 
-\item{cores}{An integer, the number of cores to be used for a local cluster
-when calculating CIs on bootstrapped models.}
+\item{confint}{logical whether to calculate confidence intervals.
+Only applies to bootstrapped model results.  Defaults to
+\code{TRUE}.}
+
+\item{cl}{An existing cluster to use (optional)}
+
+\item{cores}{The number of cores to use when creating a cluster, if an existing
+cluster is not passed (optional).  If left blank and no cluster passed,
+defaults to the number of cores available, but is only used when calculating
+bootstrapped confidence intervals.}
 
 \item{dots}{Additional arguments, not currently used.
 a label for the results.}
@@ -34,6 +42,7 @@ m <- mi_lm_pai_cvboot(~ cyl + am * (mpg + hp + drat + wt),
   "disp", "am", list(dat, dat),
   nboot = 50, holdouts = "10", cores = 2)
 
+# use two cores to speed up when obtaining bootstrapped CIs
 predict(m, cores = 2L)
 }
 }
