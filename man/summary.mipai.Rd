@@ -17,7 +17,8 @@ a label for the results.}
 \value{
 A list of data frames with an element of summary statistics
   for the PAI (PAI) and observed results for patients assigned to
-  their optimal and nonoptimal treatment (ObservedOutcome).
+  their optimal and nonoptimal treatment (ObservedOutcome) and
+  for the histogram (Graph).
 }
 \description{
 Calculate Summary Statistics for PAI Scores
