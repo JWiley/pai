@@ -164,9 +164,7 @@ observed_outcome <- function(object) {
 #'   when summarize is \code{FALSE}.
 #' @param summarize Logical whether or not to summarize values for individuals
 #'   across imputations or leave as a matrix of residuals.  Defaults to \code{TRUE}.
-#' @param boot Logical whether to return deviations from bootstraps if summarize is
-#'   \code{FALSE}, set to \code{TRUE} by default.  Only applicable to mibootpai
-#'   class objects.
+#' @param boot Not currently used.
 #' @param dots Additional arguments to pass down.  Not currently used.
 #' @return A vector of residuals for each person or matrix across the
 #'   multiple imputations.
@@ -197,11 +195,11 @@ resid.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "
         RootMedianSq = function(x) sqrt(median(x^2, na.rm = TRUE)))
       )
   } else {
-    if (inherits(object, "mibootpai") && boot) {
-      object$bootresults[, "Y", , ] - object$bootresults[, "Yhat.reality", , ]
-    } else {
+    ## if (inherits(object, "mibootpai") && boot) {
+    ##   object$bootresults[, "Y", , ] - object$bootresults[, "Yhat.reality", , ]
+    ## } else {
       object$nobootresults[, "Y", , ] - object$nobootresults[, "Yhat.reality", , ]
-    }
+    ## }
   }
 }
 

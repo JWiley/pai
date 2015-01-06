@@ -17,9 +17,7 @@ when summarize is \code{FALSE}.}
 \item{summarize}{Logical whether or not to summarize values for individuals
 across imputations or leave as a matrix of residuals.  Defaults to \code{TRUE}.}
 
-\item{boot}{Logical whether to return deviations from bootstraps if summarize is
-\code{FALSE}, set to \code{TRUE} by default.  Only applicable to mibootpai
-class objects.}
+\item{boot}{Not currently used.}
 
 \item{dots}{Additional arguments to pass down.  Not currently used.}
 }
