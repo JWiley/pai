@@ -179,9 +179,9 @@ observed_outcome <- function(object) {
 #'   "disp", "am", list(dat, dat),
 #'   nboot = 50, holdouts = "10", cores = 2)
 #'
-#' resid(m, "RootMeanSq")
+#' residuals(m, "RootMeanSq")
 #' }
-resid.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "RootMedianSq"), summarize = TRUE, boot = TRUE, ...) {
+residuals.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "RootMedianSq"), summarize = TRUE, boot = TRUE, ...) {
   stopifnot(inherits(object, "mipai"))
   type <- match.arg(type)
 
@@ -210,10 +210,12 @@ resid.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "
 #' @param plot logical whether to plot a histogram of the PAI scores.
 #' @param dots Additional arguments, not currently used.
 #'   a label for the results.
+#' @param boot logical whether to use bootstrapped results. Defaults to
+#'   \code{TRUE} if the object includes bootstrapped results.
 #' @return A list of data frames with an element of summary statistics
 #'   for the PAI (PAI) and observed results for patients assigned to
 #'   their optimal and nonoptimal treatment (ObservedOutcome) and
-#'   residuals 9Residuals), and for the histogram (Graph).
+#'   residuals (Residuals), and for the histogram (Graph).
 #' @export
 #' @import boot pander ggplot2
 #' @examples
@@ -228,7 +230,7 @@ resid.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq", "
 #'
 #' summary(m)
 #' }
-summary.mipai <- function(object, plot = TRUE, ...) {
+summary.mipai <- function(object, plot = TRUE, boot = TRUE, ...) {
   stopifnot(inherits(object, "mipai"))
   pais <- apply(object$nobootresults[, "Yhat.PAI", , ], 1, function(x) {
     mean(abs(x), na.rm = TRUE)
@@ -243,10 +245,10 @@ summary.mipai <- function(object, plot = TRUE, ...) {
   )
 
   resoutput <- data.frame(AbsError =
-    c(Mean = mean(resid.mipai(object, "MeanAbs")),
-      Median = median(resid.mipai(object, "MedianAbs"))))
+    c(Mean = mean(residuals(object, "MeanAbs"), na.rm = TRUE),
+      Median = median(residuals(object, "MedianAbs"), na.rm = TRUE)))
 
-  if (inherits(object, "mibootpai")) {
+  if (inherits(object, "mibootpai") && boot) {
     pai.means <- matrix(NA_real_, nrow = dim(object$bootresults)[3],
       ncol = dim(object$bootresults)[4])
 
@@ -295,7 +297,7 @@ summary.mipai <- function(object, plot = TRUE, ...) {
       LLBCa = LL.bca, ULBCa = UL.bca)
 
     if (FALSE) {
-    e <- resid.mipai(object, summarize = FALSE, boot = TRUE)
+    e <- residuals(object, summarize = FALSE, boot = TRUE)
 
     e.medians <- e.means <- matrix(NA_real_, nrow = dim(object$bootresults)[3],
       ncol = dim(object$bootresults)[4])

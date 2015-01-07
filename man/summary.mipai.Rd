@@ -3,7 +3,7 @@
 \alias{summary.mipai}
 \title{Calculate Summary Statistics for PAI Model}
 \usage{
-\method{summary}{mipai}(object, plot = TRUE, ...)
+\method{summary}{mipai}(object, plot = TRUE, boot = TRUE, ...)
 }
 \arguments{
 \item{object}{an mipai or mibootpai class object returned from
@@ -13,12 +13,15 @@
 
 \item{dots}{Additional arguments, not currently used.
 a label for the results.}
+
+\item{boot}{logical whether to use bootstrapped results. Defaults to
+\code{TRUE} if the object includes bootstrapped results.}
 }
 \value{
 A list of data frames with an element of summary statistics
   for the PAI (PAI) and observed results for patients assigned to
   their optimal and nonoptimal treatment (ObservedOutcome) and
-  residuals 9Residuals), and for the histogram (Graph).
+  residuals (Residuals), and for the histogram (Graph).
 }
 \description{
 Calculate Summary Statistics for PAI Model
