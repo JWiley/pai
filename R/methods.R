@@ -294,6 +294,7 @@ summary.mipai <- function(object, plot = TRUE, ...) {
       LLPerc = LL.perc, ULPerc = UL.perc,
       LLBCa = LL.bca, ULBCa = UL.bca)
 
+    if (FALSE) {
     e <- resid.mipai(object, summarize = FALSE, boot = TRUE)
 
     e.medians <- e.means <- matrix(NA_real_, nrow = dim(object$bootresults)[3],
@@ -346,6 +347,7 @@ summary.mipai <- function(object, plot = TRUE, ...) {
     rownames(e.ci.res) <- c("Mean", "Median")
 
     resoutput <- cbind(resoutput, e.ci.res)
+  }
   }
 
   obs.output <- observed_outcome(object)
