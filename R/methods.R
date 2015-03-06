@@ -233,7 +233,7 @@ residuals.mipai <- function(object, type = c("MeanAbs", "MedianAbs", "RootMeanSq
 summary.mipai <- function(object, plot = TRUE, boot = TRUE, ...) {
   stopifnot(inherits(object, "mipai"))
   pais <- apply(object$nobootresults[, "Yhat.PAI", , ], 1, function(x) {
-    mean(abs(x), na.rm = TRUE)
+    mean(x, na.rm = TRUE)
   })
 
   output <- data.frame(
