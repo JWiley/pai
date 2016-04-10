@@ -68,6 +68,14 @@ lm_pai_cvboot_fit <- function(formula, DV, TreatVar, dat, boot = TRUE, k, holdou
 
     lapply(lapply(1:k, indexer, end = ntrain), function(i) {
       b <- fastLmPure(X[boot.index[i], ], Y[boot.index[i]])$coefficients
+      ## attempt to cope when some coefficients are NA
+      na.index <- which(is.na(b))
+      if (length(na.index)) {
+        predX <- predX[, -na.index]
+        b <- b[-na.index]
+      }
+      ## end attempt to cope with NA coefficients
+
       yhat <- as.vector(predX %*% b)
       out <- cbind(Y = dat[n, DV],
                    Treatment = dat[n, TreatVar],

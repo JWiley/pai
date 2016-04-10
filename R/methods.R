@@ -237,11 +237,11 @@ summary.mipai <- function(object, plot = TRUE, boot = TRUE, ...) {
   })
 
   output <- data.frame(
-    Mean = mean(pais, na.rm=TRUE),
-    Median = median(pais, na.rm=TRUE),
-    Min = min(pais, na.rm=TRUE),
-    Max = max(pais, na.rm=TRUE),
-    SD = sd(pais, na.rm=TRUE)
+    Mean = mean(abs(pais), na.rm=TRUE),
+    Median = median(abs(pais), na.rm=TRUE),
+    Min = min(abs(pais), na.rm=TRUE),
+    Max = max(abs(pais), na.rm=TRUE),
+    SD = sd(abs(pais), na.rm=TRUE)
   )
 
   resoutput <- data.frame(AbsError =
@@ -255,7 +255,7 @@ summary.mipai <- function(object, plot = TRUE, boot = TRUE, ...) {
     for (i in 1:dim(object$bootresults)[3]) {
       for (j in 1:dim(object$bootresults)[4]) {
         x <- object$bootresults[, , i, j]
-        pai.means[i, j] <- mean(abs(x[, "Yhat.PAI"]), na.rm=TRUE)
+        pai.means[i, j] <- mean(x[, "Yhat.PAI"], na.rm=TRUE)
       }
     }
 
